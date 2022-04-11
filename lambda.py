@@ -14,10 +14,7 @@ import logging
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)
 
-
-
-
-    
+   
 def get_jira_api_token():
     """Returns the Jira API token from AWS SecretsManager"""
     try:
@@ -31,50 +28,8 @@ def get_jira_api_token():
         logger.error("Error at getting API token", exc_info=True)
         logger.error("Failed at 'get_jira_api_token()'", exc_info=True)
         
-def create_ticket (data):
-    JIRA_API_TOKEN=json.loads(get_jira_api_token())
-    email_message_raw = email.message_from_bytes(data)
-    subject = str(email.header.make_header(email.header.decode_header(email_message_raw['Subject'])))
-    rest = chilkat.CkRest()
-    bTls = True
-    port = 443
-    bAutoReconnect = True
-    success = rest.Connect("jira.server.com",port,bTls,bAutoReconnect)
-    if (success != True):
-        print("ConnectFailReason: " + str(rest.get_ConnectFailReason()))
-        print(rest.lastErrorText())
-        sys.exit()
-    
-
-    rest.SetAuthBasic("email@domain.com",JIRA_API_TOKEN['apikey'])
-    json1 = chilkat.CkJsonObject()
-    json1.UpdateString("fields.project.id","1000")
-    json1.UpdateString("fields.summary",subject)
-    json1.UpdateString("fields.issuetype.id","1300")
-    json1.UpdateString("fields.description",message)
-    rest.AddHeader("Content-Type","application/json")
-    rest.AddHeader("Accept","application/json")
-    sbRequestBody = chilkat.CkStringBuilder()
-    json1.EmitSb(sbRequestBody)
-    sbResponseBody = chilkat.CkStringBuilder()
-    success = rest.FullRequestSb("POST","/rest/api/2/issue",sbRequestBody,sbResponseBody)
-    if (success != True):
-        print(rest.lastErrorText())
-        sys.exit()
-    respStatusCode = rest.get_ResponseStatusCode()
-    if (respStatusCode >= 400):
-        print("Response Status Code = " + str(respStatusCode))
-        print("Response Header:")
-        print(rest.responseHeader())
-        print("Response Body:")
-        print(sbResponseBody.getAsString())
-        sys.exit()
-    jsonResponse = chilkat.CkJsonObject()
-    jsonResponse.LoadSb(sbResponseBody)
-    id = jsonResponse.stringOf("id")
-    key = jsonResponse.stringOf("key")
-    self = jsonResponse.stringOf("self")
-    return jsonResponse
+#def create_ticket (data):
+  
     
     
 def lambda_handler(event, context):
@@ -106,3 +61,47 @@ def lambda_handler(event, context):
     # Return value is ignored when Lambda is configured asynchronously at Amazon WorkMail
     # For more information, see https://docs.aws.amazon.com/workmail/latest/adminguide/lambda.html
     ## return msg_text
+    
+    JIRA_API_TOKEN=json.loads(get_jira_api_token())
+#    email_message_raw = email.message_from_bytes(data)
+#    subject = str(email.header.make_header(email.header.decode_header(email_message_raw['Subject'])))
+    rest = chilkat.CkRest()
+    bTls = True
+    port = 443
+    bAutoReconnect = True
+    success = rest.Connect("jira.server.com",port,bTls,bAutoReconnect)
+    if (success != True):
+        print("ConnectFailReason: " + str(rest.get_ConnectFailReason()))
+        print(rest.lastErrorText())
+        sys.exit()
+    
+
+    rest.SetAuthBasic("email@domain.com",JIRA_API_TOKEN['apikey'])
+    json1 = chilkat.CkJsonObject()
+    json1.UpdateString("fields.project.id","1000")
+    json1.UpdateString("fields.summary",subject)
+    json1.UpdateString("fields.issuetype.id","1300")
+    json1.UpdateString("fields.description",msg_text)
+    rest.AddHeader("Content-Type","application/json")
+    rest.AddHeader("Accept","application/json")
+    sbRequestBody = chilkat.CkStringBuilder()
+    json1.EmitSb(sbRequestBody)
+    sbResponseBody = chilkat.CkStringBuilder()
+    success = rest.FullRequestSb("POST","/rest/api/2/issue",sbRequestBody,sbResponseBody)
+    if (success != True):
+        print(rest.lastErrorText())
+        sys.exit()
+    respStatusCode = rest.get_ResponseStatusCode()
+    if (respStatusCode >= 400):
+        print("Response Status Code = " + str(respStatusCode))
+        print("Response Header:")
+        print(rest.responseHeader())
+        print("Response Body:")
+        print(sbResponseBody.getAsString())
+        sys.exit()
+    jsonResponse = chilkat.CkJsonObject()
+    jsonResponse.LoadSb(sbResponseBody)
+    id = jsonResponse.stringOf("id")
+    key = jsonResponse.stringOf("key")
+    self = jsonResponse.stringOf("self")
+    return jsonResponse
